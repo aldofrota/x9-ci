@@ -1,73 +1,105 @@
 import { Injectable } from '@nestjs/common';
-
-interface PrStats {
-  commits: number;
-  additions: number;
-  deletions: number;
-  changedFiles: number;
-  summary?: string;
-}
+import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
+import { PullRequestSummary } from '@/modules/github/github.types';
+import { SummaryResponse } from '@/modules/ai/ai.types';
 
 @Injectable()
 export class SlackService {
-  async sendMessage(channel: string, message: string): Promise<void> {
-    // Implementar integração com Slack API
-    console.log(`Enviando mensagem para ${channel}: ${message}`);
+  private readonly token: string;
+  private readonly defaultChannel: string;
+
+  constructor(private readonly configService: ConfigService) {
+    this.token = this.configService.get<string>('slack.token') || '';
+    this.defaultChannel =
+      this.configService.get<string>('slack.channel') || '#general';
   }
 
-  async sendPrSummary(
-    channel: string,
-    summary: string,
-    prUrl: string,
-  ): Promise<void> {
-    const message = `📝 *Resumo do Pull Request*\n\n${summary}\n\n🔗 ${prUrl}`;
-    await this.sendMessage(channel, message);
+  async sendMessage(channel: string, message: string): Promise<void> {
+    try {
+      console.log('📤 Enviando mensagem para o Slack...');
+
+      const response = await axios.post(
+        'https://slack.com/api/chat.postMessage',
+        {
+          channel,
+          text: message,
+          unfurl_links: false,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${this.token}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      if (response.data.ok) {
+        console.log('✅ Mensagem enviada com sucesso para o Slack');
+      } else {
+        console.error(
+          '❌ Erro ao enviar mensagem para o Slack:',
+          response.data.error,
+        );
+      }
+    } catch (error) {
+      console.error('❌ Erro ao enviar mensagem para o Slack:', error);
+      throw error;
+    }
   }
 
   async sendPrMergedNotification(
-    pullRequest: any,
-    stats: PrStats,
+    pullRequestSummary: PullRequestSummary,
+    summary: SummaryResponse,
   ): Promise<void> {
-    const message = this.buildPrMergedMessage(pullRequest, stats);
-    await this.sendMessage('#general', message);
+    const message = this.buildMessage(pullRequestSummary, summary);
+    await this.sendMessage(this.defaultChannel, message);
   }
 
-  private buildPrMergedMessage(pullRequest: any, stats: PrStats): string {
-    const approvedReviewers = pullRequest.reviewers
+  private buildMessage(
+    input: PullRequestSummary,
+    summary: SummaryResponse,
+  ): string {
+    const pr = input.pullRequest;
+    const approvedReviewers = input.reviews
       .filter((r) => r.state === 'approved')
       .map((r) => `@${r.login}`)
       .join(', ');
 
-    const changedFilesList = pullRequest.files
+    const changedFilesList = input.files
       .map((file) => {
         const codeowners = file.codeowners?.length
-          ? ` (Codeowners: ${file.codeowners.join(', ')})`
+          ? ` (*Codeowners: ${file.codeowners.join(', ')}*)`
           : '';
-        return `  - ${file.filename}${codeowners}`;
+        return ` • ${file.filename}${codeowners}`;
       })
       .join('\n');
 
-    let message = `✅ **PR Mergeado: [#${pullRequest.number} - ${pullRequest.title}](${pullRequest.url})**\n`;
-    message += `👤 Autor: @${pullRequest.author}\n`;
+    let message = `✅ *PR Mergeado: <${pr.url}|${pr.url.split('/').pop()} - ${pr.title}>*\n`;
+    message += `👤 *Autor:* <@${pr.author}>\n`;
 
     if (approvedReviewers) {
-      message += `👥 Aprovado por: ${approvedReviewers}\n`;
+      message += `👥 *Aprovado por:* ${approvedReviewers}\n`;
     }
 
-    message += `🛠️ **Arquivos modificados:**\n${changedFilesList}\n\n`;
+    message += `🛠️ *Arquivos modificados:*\n${changedFilesList}\n\n`;
 
-    if (stats.summary) {
-      message += `${stats.summary}\n`;
+    if (summary) {
+      message += `🧠 *Resumo:*\n`;
+      message += ` • *Contexto:* ${summary.context}\n`;
+      message += ` • *Mudanças:* ${summary.changes}\n`;
+      message += ` • *Impacto:* ${summary.impact}\n`;
+      message += ` • *Pontos de Atenção:* ${summary.attention}\n\n`;
     }
 
-    message += `📊 **Estatísticas:**\n`;
-    message += `• Commits: ${stats.commits}\n`;
-    message += `• Adições: +${stats.additions}\n`;
-    message += `• Remoções: -${stats.deletions}\n`;
-    message += `• Arquivos alterados: ${stats.changedFiles}\n`;
+    message += `📊 *Estatísticas:*\n`;
+    message += ` • *Commits:* ${pr.commits}\n`;
+    message += ` • *Adições:* +${pr.additions}\n`;
+    message += ` • *Remoções:* -${pr.deletions}\n`;
+    message += ` • *Arquivos alterados:* ${pr.changedFiles}\n`;
 
-    if (pullRequest.mergedAt) {
-      message += `\n🕐 Mergeado em: ${pullRequest.mergedAt.toLocaleString('pt-BR')}`;
+    if (pr.mergedAt) {
+      message += `\n🕐 *Mergeado em:* _${new Date(pr.mergedAt).toLocaleString('pt-BR')}_`;
     }
 
     return message;

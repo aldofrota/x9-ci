@@ -1,13 +1,10 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { GeminiService } from './gemini.service';
 
 @Module({
-  providers: [
-    {
-      provide: 'GEMINI_SERVICE',
-      useClass: GeminiService,
-    },
-  ],
-  exports: ['GEMINI_SERVICE'],
+  imports: [ConfigModule],
+  providers: [GeminiService],
+  exports: [GeminiService],
 })
 export class AiModule {}

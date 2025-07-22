@@ -143,6 +143,9 @@ export class GithubApiService {
         mergedAt: data.merged_at,
         state: data.state,
         commits: data.commits,
+        additions: data.additions,
+        deletions: data.deletions,
+        changedFiles: data.changed_files,
       };
     } catch (error) {
       console.error('Erro ao buscar PR:', error);
@@ -204,6 +207,9 @@ export class GithubApiService {
           mergedAt: '',
           state: '',
           commits: 0,
+          additions: 0,
+          deletions: 0,
+          changedFiles: 0,
         },
         files: [],
         diff: '',

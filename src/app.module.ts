@@ -3,12 +3,12 @@ import { ConfigModule } from '@nestjs/config';
 import { GithubModule } from './modules/github/github.module';
 import { SlackModule } from './modules/slack/slack.module';
 import { AiModule } from './modules/ai/ai.module';
-import { githubConfig, slackConfig } from './config/env.config';
+import { githubConfig, slackConfig, geminiConfig } from './config/env.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      load: [githubConfig, slackConfig],
+      load: [githubConfig, slackConfig, geminiConfig],
       isGlobal: true,
     }),
     GithubModule,

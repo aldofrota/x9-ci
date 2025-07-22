@@ -26,6 +26,9 @@ export interface PullRequest {
   mergedAt: string;
   state: string;
   commits: number;
+  additions: number;
+  deletions: number;
+  changedFiles: number;
 }
 
 export interface PullRequestFile {
