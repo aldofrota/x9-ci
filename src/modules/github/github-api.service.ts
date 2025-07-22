@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Octokit } from '@octokit/rest';
+import {
+  PullRequest,
+  PullRequestFile,
+  PullRequestReview,
+  PullRequestSummary,
+} from './github.types';
 
 interface CodeownerRule {
   pattern: string;
@@ -24,7 +30,7 @@ export class GithubApiService {
     owner: string,
     repo: string,
     prNumber: number,
-  ): Promise<any[]> {
+  ): Promise<PullRequestFile[]> {
     try {
       const { data: files } = await this.octokit.pulls.listFiles({
         owner,
@@ -51,7 +57,7 @@ export class GithubApiService {
     owner: string,
     repo: string,
     prNumber: number,
-  ): Promise<any[]> {
+  ): Promise<PullRequestReview[]> {
     try {
       const { data: reviews } = await this.octokit.pulls.listReviews({
         owner,
@@ -59,8 +65,7 @@ export class GithubApiService {
         pull_number: prNumber,
       });
 
-      // Agrupa reviews por usuário e pega o estado mais recente
-      const reviewsByUser = new Map<string, any>();
+      const reviewsByUser = new Map<string, PullRequestReview>();
 
       reviews.forEach((review) => {
         const userLogin = review.user?.login || '';
@@ -120,7 +125,7 @@ export class GithubApiService {
     owner: string,
     repo: string,
     prNumber: number,
-  ): Promise<any> {
+  ): Promise<PullRequest> {
     try {
       const { data } = await this.octokit.pulls.get({
         owner,
@@ -137,6 +142,7 @@ export class GithubApiService {
         updatedAt: data.updated_at,
         mergedAt: data.merged_at,
         state: data.state,
+        commits: data.commits,
       };
     } catch (error) {
       console.error('Erro ao buscar PR:', error);
@@ -170,12 +176,7 @@ export class GithubApiService {
     owner: string,
     repo: string,
     prNumber: number,
-  ): Promise<{
-    pullRequest: any;
-    files: any[];
-    diff: string;
-    reviews: any[];
-  }> {
+  ): Promise<PullRequestSummary> {
     try {
       const [pullRequest, files, diff, reviews] = await Promise.all([
         this.getPullRequest(owner, repo, prNumber),
@@ -193,7 +194,17 @@ export class GithubApiService {
     } catch (error) {
       console.error('Erro ao buscar resumo do PR:', error);
       return {
-        pullRequest: {},
+        pullRequest: {
+          url: '',
+          title: '',
+          body: '',
+          author: '',
+          createdAt: '',
+          updatedAt: '',
+          mergedAt: '',
+          state: '',
+          commits: 0,
+        },
         files: [],
         diff: '',
         reviews: [],

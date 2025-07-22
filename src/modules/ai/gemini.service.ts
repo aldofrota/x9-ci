@@ -1,27 +1,28 @@
 import { Injectable } from '@nestjs/common';
+import { PullRequestSummary } from '@/modules/github/github.types';
 
 @Injectable()
 export class GeminiService {
-  async generateSummary(pullRequest: any): Promise<string> {
-    // Implementar integração com Gemini API
-    const prompt = this.buildPrompt(pullRequest);
+  async generateSummary(input: PullRequestSummary): Promise<string> {
+    const prompt = this.buildPrompt(input);
 
     console.log('prompt', prompt);
 
-    // Aqui seria feita a chamada para a API do Gemini
-    // Por enquanto retornando um resumo mock
-    return `Resumo do PR #${pullRequest.id}: ${pullRequest.title}`;
+    return `Resumo do PR #${input.pullRequest.url}: ${input.pullRequest.title}`;
   }
 
-  private buildPrompt(pullRequest: any): string {
+  private buildPrompt(input: PullRequestSummary): string {
     return `
       Analise este pull request e gere um resumo conciso:
       
-      Título: ${pullRequest.title}
-      Descrição: ${pullRequest.description}
-      Autor: ${pullRequest.author}
-      Arquivos modificados: ${pullRequest.files.length}
-      Commits: ${pullRequest.commits.length}
+      Título: ${input.pullRequest.title}
+      Descrição: ${input.pullRequest.body}
+      Autor: ${input.pullRequest.author}
+      Diffs: ${input.diff}
+
+      Eu quero que você retorne um resumo do PR em markdown, com as seguintes informações:
+
+      Resumo de tudo que foi alterado e o impacto que isso pode ter e pontos de atenção num formato json.
     `;
   }
 }
