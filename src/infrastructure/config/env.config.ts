@@ -13,4 +13,4 @@ export const slackConfig = registerAs('slack', () => ({
 export const geminiConfig = registerAs('gemini', () => ({
   apiKey: process.env.GEMINI_API_KEY,
   model: process.env.GEMINI_MODEL || 'gemini-pro',
-})); 
+}));

@@ -7,7 +7,11 @@ import { WebhookController } from './interfaces/http/webhook.controller';
 import { SummarizePrUseCase } from './application/use-cases/summarize-pr.use-case';
 import { PrRepositoryImpl } from './infrastructure/persistence/pr.repository.impl';
 import { PrRepository } from './domain/repositories/pr.repository';
-import { githubConfig, slackConfig, geminiConfig } from './infrastructure/config/env.config';
+import {
+  githubConfig,
+  slackConfig,
+  geminiConfig,
+} from './infrastructure/config/env.config';
 
 @Module({
   imports: [

@@ -7,7 +7,7 @@ export class GeminiService implements GeminiSummaryService {
   async generateSummary(pullRequest: PullRequest): Promise<string> {
     // Implementar integração com Gemini API
     const prompt = this.buildPrompt(pullRequest);
-    
+
     // Aqui seria feita a chamada para a API do Gemini
     // Por enquanto retornando um resumo mock
     return `Resumo do PR #${pullRequest.id}: ${pullRequest.title}`;
@@ -24,4 +24,4 @@ export class GeminiService implements GeminiSummaryService {
       Commits: ${pullRequest.commits.length}
     `;
   }
-} 
+}

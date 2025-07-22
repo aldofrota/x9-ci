@@ -11,4 +11,4 @@ import { GeminiSummaryService } from '../../domain/services/gemini-summary.servi
   ],
   exports: [GeminiSummaryService],
 })
-export class AiModule {} 
+export class AiModule {}

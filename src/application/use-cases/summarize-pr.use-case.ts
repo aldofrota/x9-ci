@@ -12,13 +12,14 @@ export class SummarizePrUseCase {
 
   async execute(dto: SummarizePrDto): Promise<string> {
     const pullRequest = await this.prRepository.findById(dto.prId);
-    
+
     if (!pullRequest) {
       throw new Error('Pull request não encontrado');
     }
 
-    const summary = await this.geminiSummaryService.generateSummary(pullRequest);
-    
+    const summary =
+      await this.geminiSummaryService.generateSummary(pullRequest);
+
     return summary;
   }
-} 
+}

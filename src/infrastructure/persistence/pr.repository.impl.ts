@@ -10,7 +10,10 @@ export class PrRepositoryImpl implements PrRepository {
     return this.pullRequests.get(id) || null;
   }
 
-  async findByRepository(owner: string, repository: string): Promise<PullRequest[]> {
+  async findByRepository(
+    owner: string,
+    repository: string,
+  ): Promise<PullRequest[]> {
     return Array.from(this.pullRequests.values()).filter(
       (pr) => pr.owner === owner && pr.repository === repository,
     );
@@ -19,4 +22,4 @@ export class PrRepositoryImpl implements PrRepository {
   async save(pullRequest: PullRequest): Promise<void> {
     this.pullRequests.set(pullRequest.id, pullRequest);
   }
-} 
+}

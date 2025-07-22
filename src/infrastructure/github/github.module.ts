@@ -7,4 +7,4 @@ import { GithubService } from './github.service';
   providers: [GithubService],
   exports: [GithubService],
 })
-export class GithubModule {} 
+export class GithubModule {}

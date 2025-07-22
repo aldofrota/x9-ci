@@ -7,8 +7,12 @@ export class SlackService {
     console.log(`Enviando mensagem para ${channel}: ${message}`);
   }
 
-  async sendPrSummary(channel: string, summary: string, prUrl: string): Promise<void> {
+  async sendPrSummary(
+    channel: string,
+    summary: string,
+    prUrl: string,
+  ): Promise<void> {
     const message = `📝 *Resumo do Pull Request*\n\n${summary}\n\n🔗 ${prUrl}`;
     await this.sendMessage(channel, message);
   }
-} 
+}

@@ -12,4 +12,4 @@ export class GithubController {
   ) {
     return this.githubService.handleWebhook(payload, event);
   }
-} 
+}

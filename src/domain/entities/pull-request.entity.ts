@@ -18,4 +18,4 @@ export interface Commit {
   message: string;
   author: string;
   date: Date;
-} 
+}

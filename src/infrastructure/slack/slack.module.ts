@@ -5,4 +5,4 @@ import { SlackService } from './slack.service';
   providers: [SlackService],
   exports: [SlackService],
 })
-export class SlackModule {} 
+export class SlackModule {}
