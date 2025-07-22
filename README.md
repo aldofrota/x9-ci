@@ -1,205 +1,134 @@
-# 🤖 X9-CI - Resumidor de Pull Requests com IA
+# X9-CI - Sistema de Notificações de Pull Requests
 
-Sistema automatizado para gerar resumos inteligentes de Pull Requests usando IA (Gemini) e enviar notificações para o Slack.
+Sistema automatizado para processar webhooks do GitHub e enviar notificações detalhadas para o Slack quando PRs são mergeados na main.
 
-## 📋 Descrição
+## 🚀 Funcionalidades
 
-O X9-CI é uma aplicação NestJS que:
+- **Processamento de Webhooks**: Recebe webhooks do GitHub para eventos de pull request
+- **Validação Inteligente**: Processa apenas PRs fechados que foram mergeados na main
+- **Extração de Dados**: Busca informações detalhadas via GitHub API:
+  - Arquivos modificados
+  - Codeowners dos arquivos
+  - Reviews e aprovadores
+  - Estatísticas de commits
+- **Análise com IA**: Gera resumos automáticos baseados nos arquivos modificados
+- **Notificações Slack**: Envia mensagens formatadas com todas as informações relevantes
 
-- Recebe webhooks do GitHub quando PRs são criados/atualizados
-- Gera resumos inteligentes usando Google Gemini AI
-- Envia notificações formatadas para canais do Slack
-- Segue arquitetura hexagonal/clean architecture
+## 📋 Estrutura da Mensagem
+
+```
+✅ PR Mergeado: [#123 - Ajusta login com token JWT](link)
+👤 Autor: @aldofrota
+👥 Aprovado por: @ana-dev, @carlos-back
+🛠️ Arquivos modificados:
+  - src/auth/login.ts (Codeowners: @auth-team)
+  - src/config/env.ts (Codeowners: @infra)
+
+🧠 Resumo IA:
+- Adicionado middleware `helmet` para segurança
+- Corrigido bug no token expirado
+- Pode impactar login de parceiros externos
+
+⚠️ Atenção:
+- Middleware pode gerar conflito com header `Content-Security-Policy`
+- Verificar testes de login externo
+
+📊 Estatísticas:
+• Commits: 5
+• Adições: +150
+• Remoções: -25
+• Arquivos alterados: 8
+
+🕐 Mergeado em: 22/07/2025 15:21:59
+```
 
 ## 🏗️ Arquitetura
 
-O projeto segue os princípios da **Clean Architecture** com separação clara de responsabilidades:
+### Camadas da Aplicação
 
-```bash
-src/
-├── application/           # Casos de uso e DTOs
-│   ├── use-cases/
-│   │   └── summarize-pr.use-case.ts
-│   └── dtos/
-│       └── summarize-pr.dto.ts
-├── domain/              # Regras de negócio e entidades
-│   ├── entities/
-│   │   └── pull-request.entity.ts
-│   ├── repositories/
-│   │   └── pr.repository.ts
-│   └── services/
-│       └── gemini-summary.service.ts
-├── infrastructure/       # Implementações concretas
-│   ├── github/
-│   │   ├── github.controller.ts
-│   │   ├── github.service.ts
-│   │   └── github.module.ts
-│   ├── slack/
-│   │   ├── slack.service.ts
-│   │   └── slack.module.ts
-│   ├── ai/
-│   │   ├── gemini.service.ts
-│   │   └── ai.module.ts
-│   ├── persistence/
-│   │   └── pr.repository.impl.ts
-│   └── config/
-│       └── env.config.ts
-├── interfaces/          # Controllers HTTP
-│   └── http/
-│       └── webhook.controller.ts
-├── main.ts
-└── app.module.ts
-```
+- **Domain**: Entidades e interfaces de negócio
+- **Application**: Casos de uso da aplicação
+- **Infrastructure**: Implementações concretas (GitHub API, Slack, etc.)
+- **Interfaces**: Controllers HTTP
 
-## 🚀 Instalação
+### Módulos Principais
 
-### Pré-requisitos
-
-- Node.js 18+
-- Yarn ou npm
-- Conta no GitHub com webhook configurado
-- Token do Slack
-- API Key do Google Gemini
-
-### 1. Clone o repositório
-
-```bash
-git clone <repository-url>
-cd x9-ci
-```
-
-### 2. Instale as dependências
-
-```bash
-yarn install
-```
-
-### 3. Configure as variáveis de ambiente
-
-Crie um arquivo `.env` na raiz do projeto:
-
-```env
-# GitHub
-GITHUB_WEBHOOK_SECRET=seu_webhook_secret
-GITHUB_TOKEN=seu_github_token
-
-# Slack
-SLACK_TOKEN=xoxb-seu_slack_token
-SLACK_CHANNEL=#canal-destino
-
-# Google Gemini
-GEMINI_API_KEY=sua_gemini_api_key
-GEMINI_MODEL=gemini-pro
-```
-
-### 4. Execute a aplicação
-
-```bash
-# Desenvolvimento
-yarn start:dev
-
-# Produção
-yarn start:prod
-```
+- **GithubModule**: Processamento de webhooks e integração com GitHub API
+- **SlackModule**: Envio de notificações para o Slack
+- **AiModule**: Geração de resumos inteligentes
 
 ## 🔧 Configuração
 
-### GitHub Webhook
+### Variáveis de Ambiente
 
-1. Vá para seu repositório no GitHub
-2. Settings → Webhooks → Add webhook
-3. URL: `https://seu-dominio.com/github/webhook`
-4. Content type: `application/json`
-5. Events: `Pull requests`
-6. Secret: Use o mesmo valor de `GITHUB_WEBHOOK_SECRET`
+```env
+# GitHub
+GITHUB_WEBHOOK_SECRET=your_webhook_secret
+GITHUB_TOKEN=your_github_token
 
-### Slack
-
-1. Crie um app no Slack
-2. Adicione a permissão `chat:write`
-3. Instale o app no workspace
-4. Copie o token para `SLACK_TOKEN`
-
-### Google Gemini
-
-1. Acesse [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Crie uma API key
-3. Configure no `.env`
-
-## 📡 Endpoints
-
-### Webhook GitHub
-
-```curl
-POST /github/webhook
+# Slack
+SLACK_TOKEN=your_slack_token
+SLACK_CHANNEL=#general
 ```
 
-Recebe eventos do GitHub (PRs criados/atualizados)
+### Webhook do GitHub
 
-### Resumo Manual
+Configure o webhook no seu repositório:
 
-```curl
-POST /webhook/summarize-pr
-Content-Type: application/json
+- **URL**: `https://seu-dominio.com/github/webhook`
+- **Content Type**: `application/json`
+- **Events**: `Pull requests`
 
-{
-  "prId": "123",
-  "repository": "meu-repo",
-  "owner": "meu-usuario"
-}
-```
+## 🧪 Testando
 
-## 🧪 Testes
+### Teste Local
+
+1. Inicie o servidor:
 
 ```bash
-# Testes unitários
-yarn test
-
-# Testes e2e
-yarn test:e2e
-
-# Cobertura
-yarn test:cov
+npm run start:dev
 ```
 
-## 📦 Scripts Disponíveis
+2. Teste com o payload de exemplo:
 
 ```bash
-yarn start:dev      # Desenvolvimento com hot reload
-yarn start:debug    # Debug mode
-yarn start:prod     # Produção
-yarn test           # Testes unitários
-yarn test:e2e       # Testes end-to-end
-yarn test:cov       # Testes com cobertura
-yarn lint           # Linting
-yarn lint:fix       # Linting com auto-fix
+./test-webhook.sh
 ```
 
-## 🔄 Fluxo de Funcionamento
+### Payload de Teste
 
-1. **GitHub Webhook**: PR é criado/atualizado
-2. **GitHub Service**: Processa o evento e extrai dados do PR
-3. **SummarizePrUseCase**: Orquestra a geração do resumo
-4. **Gemini Service**: Gera resumo usando IA
-5. **Slack Service**: Envia notificação formatada
-6. **Persistence**: Opcionalmente salva histórico
+O arquivo `test-webhook.json` contém um exemplo completo do payload do webhook.
 
-## 🛠️ Tecnologias
+## 📦 Instalação
 
-- **Framework**: NestJS
-- **Linguagem**: TypeScript
-- **IA**: Google Gemini
-- **Integrações**: GitHub API, Slack API
-- **Arquitetura**: Clean Architecture/Hexagonal
+```bash
+npm install
+npm run build
+npm run start:dev
+```
 
-## 📝 Licença
+## 🔍 Análise de Escalabilidade e Manutenibilidade
 
-MIT
+### Pontos Fortes
 
-## 🤝 Contribuição
+1. **Separação de Responsabilidades**: Cada serviço tem uma responsabilidade específica
+2. **Injeção de Dependência**: Facilita testes e manutenção
+3. **Tipagem Forte**: TypeScript garante integridade dos dados
+4. **Modularidade**: Módulos independentes facilitam evolução
 
-1. Fork o projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
+### Melhorias Sugeridas
+
+1. **Cache de Codeowners**: Implementar cache para evitar consultas repetidas ao GitHub
+2. **Retry Logic**: Adicionar retry para chamadas à API do GitHub
+3. **Logging Estruturado**: Implementar logging mais robusto
+4. **Métricas**: Adicionar métricas de performance e uso
+5. **Testes Unitários**: Implementar testes para todos os serviços
+6. **Configuração Dinâmica**: Permitir configuração de codeowners por repositório
+
+### Próximos Passos
+
+1. Implementar integração real com Slack API
+2. Adicionar autenticação e validação de webhooks
+3. Implementar cache para otimizar performance
+4. Criar dashboard para monitoramento
+5. Adicionar suporte a múltiplos repositórios

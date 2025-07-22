@@ -1,14 +1,15 @@
 import { Module } from '@nestjs/common';
 import { GeminiService } from './gemini.service';
-import { GeminiSummaryService } from '../../domain/services/gemini-summary.service';
+import { SummaryService } from './summary.service';
 
 @Module({
   providers: [
     {
-      provide: GeminiSummaryService,
+      provide: 'GEMINI_SUMMARY_SERVICE',
       useClass: GeminiService,
     },
+    SummaryService,
   ],
-  exports: [GeminiSummaryService],
+  exports: ['GEMINI_SUMMARY_SERVICE', SummaryService],
 })
 export class AiModule {}

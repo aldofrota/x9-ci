@@ -1,19 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { PullRequest } from '../../domain/entities/pull-request.entity';
-import { GeminiSummaryService } from '../../domain/services/gemini-summary.service';
 
 @Injectable()
-export class GeminiService implements GeminiSummaryService {
-  async generateSummary(pullRequest: PullRequest): Promise<string> {
+export class GeminiService {
+  async generateSummary(pullRequest: any): Promise<string> {
     // Implementar integração com Gemini API
     const prompt = this.buildPrompt(pullRequest);
+
+    console.log('prompt', prompt);
 
     // Aqui seria feita a chamada para a API do Gemini
     // Por enquanto retornando um resumo mock
     return `Resumo do PR #${pullRequest.id}: ${pullRequest.title}`;
   }
 
-  private buildPrompt(pullRequest: PullRequest): string {
+  private buildPrompt(pullRequest: any): string {
     return `
       Analise este pull request e gere um resumo conciso:
       
