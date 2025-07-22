@@ -21,18 +21,14 @@ export class PullRequestInfoUseCase {
   ): Promise<void> {
     const { prNumber, owner, repo } = payload;
 
-    console.log('🔍 Buscando informações do PR...');
-
     const prInfos = await this.githubApiService.getPullRequestSummary(
-      'ResultadosDigitais',
-      'rdsc-megasac-api',
-      926,
+      owner,
+      repo,
+      prNumber,
     );
 
     const summary = await this.geminiService.generateSummary(prInfos);
 
     await this.slackService.sendPrMergedNotification(prInfos, summary);
-
-    console.log('✅ Notificação enviada para o Slack');
   }
 }

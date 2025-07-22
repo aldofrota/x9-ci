@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PullRequestSummary } from '@/modules/github/github.types';
 import { GoogleGenAI } from '@google/genai';
 import { ConfigService } from '@nestjs/config';
@@ -7,7 +7,9 @@ import { SummaryResponse } from './ai.types';
 @Injectable()
 export class GeminiService {
   private genAI: GoogleGenAI;
-
+  private readonly logger = new Logger(GeminiService.name, {
+    timestamp: true,
+  });
   constructor(private readonly configService: ConfigService) {
     this.genAI = new GoogleGenAI({
       apiKey: this.configService.get<string>('gemini.apiKey'),
@@ -23,16 +25,13 @@ export class GeminiService {
     });
 
     const responseText = response.text;
-    console.log('Resposta bruta do Gemini:', responseText);
 
     try {
-      // Tenta extrair JSON da resposta
       const jsonMatch = responseText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const jsonString = jsonMatch[0];
         const parsed = JSON.parse(jsonString);
 
-        // Valida se tem todas as chaves necessárias
         if (
           parsed.context &&
           parsed.changes &&
@@ -43,19 +42,17 @@ export class GeminiService {
         }
       }
 
-      // Se não conseguiu extrair JSON válido, gera um fallback
-      console.warn(
+      this.logger.warn(
         'Não foi possível extrair JSON válido da resposta do Gemini',
       );
       return this.generateFallbackSummary(responseText);
     } catch (error) {
-      console.error('Erro ao fazer parse do JSON:', error);
+      this.logger.error('Erro ao fazer parse do JSON: ' + error.message);
       return this.generateFallbackSummary(responseText);
     }
   }
 
   private generateFallbackSummary(responseText: string): SummaryResponse {
-    // Extrai informações relevantes do texto para criar um resumo estruturado
     const lines = responseText.split('\n').filter((line) => line.trim());
 
     return {
@@ -81,16 +78,17 @@ export class GeminiService {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].toLowerCase();
       if (keywords.some((keyword) => line.includes(keyword))) {
-        // Coleta as próximas linhas até encontrar outro tópico ou fim
         const sectionLines: string[] = [];
         for (let j = i + 1; j < lines.length; j++) {
-          const nextLine = lines[j];
-          if (nextLine.trim() === '' || this.isNewSection(nextLine)) {
-            break;
-          }
-          sectionLines.push(nextLine.trim());
+          const nextLine = lines[j].trim();
+
+          if (nextLine === '') continue;
+
+          if (this.isNewSection(nextLine)) break;
+
+          sectionLines.push(nextLine);
         }
-        return sectionLines.join(' ').trim() || null;
+        return sectionLines.join('\n').trim() || null;
       }
     }
     return null;
@@ -112,29 +110,29 @@ export class GeminiService {
 
   private buildPrompt(input: PullRequestSummary): string {
     return `
-      Analise este pull request e gere um resumo conciso:
-
+      Analise o pull request abaixo e gere um resumo **conciso**.
+      
       Título: ${input.pullRequest.title}
       Descrição: ${input.pullRequest.body}
       Autor: ${input.pullRequest.author}
       Diffs: ${input.diff}
-
-      IMPORTANTE: Você DEVE retornar APENAS um JSON válido, sem texto adicional antes ou depois.
-
-      O JSON deve ter exatamente esta estrutura:
+      
+      Responda **APENAS** com um JSON **válido**, **sem texto antes ou depois**.
+      
+      Use **exatamente** esta estrutura:
       {
         "context": "Contexto e problema abordado pelo PR",
         "changes": "Principais mudanças implementadas",
-        "impact": "Impacto esperado das mudanças",
+        "impact": "Impacto esperado das mudanças com base no contexto e diffs",
         "attention": "Pontos que merecem atenção especial"
       }
-
-      Regras:
-      - Retorne APENAS o JSON, sem explicações
-      - Use aspas duplas para strings
-      - Não inclua vírgulas extras
-      - Mantenha o JSON válido e bem formatado
-      - Seja conciso mas informativo em cada campo
-      `;
+      
+      Regras obrigatórias:
+      - Apenas JSON puro, sem explicações.
+      - Use aspas duplas para todas as strings.
+      - Não adicione vírgulas extras.
+      - Mantenha o JSON **válido** e **minimamente formatado**.
+      - Seja **objetivo** e **claro** em cada campo.
+      `.trim();
   }
 }

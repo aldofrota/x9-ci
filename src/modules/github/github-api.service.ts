@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Octokit } from '@octokit/rest';
 import {
@@ -17,6 +17,9 @@ interface CodeownerRule {
 export class GithubApiService {
   private readonly octokit: Octokit;
   private codeownersCache: Map<string, CodeownerRule[]> = new Map();
+  private readonly logger = new Logger(GithubApiService.name, {
+    timestamp: true,
+  });
 
   constructor(private readonly configService: ConfigService) {
     const token = this.configService.get<string>('github.token');
@@ -48,7 +51,7 @@ export class GithubApiService {
         codeowners: this.findCodeownersForFile(file.filename, codeownersRules),
       }));
     } catch (error) {
-      console.error('Erro ao buscar arquivos do PR:', error);
+      this.logger.error('Erro ao buscar arquivos do PR: ' + error.message);
       return [];
     }
   }
@@ -90,7 +93,7 @@ export class GithubApiService {
 
       return Array.from(reviewsByUser.values());
     } catch (error) {
-      console.error('Erro ao buscar reviews do PR:', error);
+      this.logger.error('Erro ao buscar reviews do PR: ' + error.message);
       return [];
     }
   }
@@ -146,9 +149,11 @@ export class GithubApiService {
         additions: data.additions,
         deletions: data.deletions,
         changedFiles: data.changed_files,
+        repoName: repo,
+        repoUrl: `https://github.com/${owner}/${repo}`,
       };
     } catch (error) {
-      console.error('Erro ao buscar PR:', error);
+      this.logger.error('Erro ao buscar PR: ' + error.message);
       throw error;
     }
   }
@@ -170,7 +175,7 @@ export class GithubApiService {
 
       return data as unknown as string;
     } catch (error) {
-      console.error('Erro ao buscar diff do PR:', error);
+      this.logger.error('Erro ao buscar diff do PR: ' + error.message);
       return '';
     }
   }
@@ -195,7 +200,7 @@ export class GithubApiService {
         reviews,
       };
     } catch (error) {
-      console.error('Erro ao buscar resumo do PR:', error);
+      this.logger.error('Erro ao buscar resumo do PR: ' + error.message);
       return {
         pullRequest: {
           url: '',
@@ -210,6 +215,8 @@ export class GithubApiService {
           additions: 0,
           deletions: 0,
           changedFiles: 0,
+          repoName: '',
+          repoUrl: '',
         },
         files: [],
         diff: '',
@@ -291,7 +298,9 @@ export class GithubApiService {
       const regex = new RegExp(regexPattern);
       return regex.test(filename);
     } catch (error) {
-      console.error('Erro ao processar padrão CODEOWNERS:', pattern, error);
+      this.logger.error(
+        'Erro ao processar padrão CODEOWNERS: ' + error.message,
+      );
       return false;
     }
   }

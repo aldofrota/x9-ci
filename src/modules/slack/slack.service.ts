@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { PullRequestSummary } from '@/modules/github/github.types';
@@ -8,6 +8,10 @@ import { SummaryResponse } from '@/modules/ai/ai.types';
 export class SlackService {
   private readonly token: string;
   private readonly defaultChannel: string;
+  private readonly logger = new Logger(SlackService.name, {
+    timestamp: true,
+  });
+  private readonly url = 'https://slack.com/api/chat.postMessage';
 
   constructor(private readonly configService: ConfigService) {
     this.token = this.configService.get<string>('slack.token') || '';
@@ -17,10 +21,8 @@ export class SlackService {
 
   async sendMessage(channel: string, message: string): Promise<void> {
     try {
-      console.log('📤 Enviando mensagem para o Slack...');
-
       const response = await axios.post(
-        'https://slack.com/api/chat.postMessage',
+        this.url,
         {
           channel,
           text: message,
@@ -35,15 +37,9 @@ export class SlackService {
       );
 
       if (response.data.ok) {
-        console.log('✅ Mensagem enviada com sucesso para o Slack');
-      } else {
-        console.error(
-          '❌ Erro ao enviar mensagem para o Slack:',
-          response.data.error,
-        );
+        this.logger.log('✅ Mensagem enviada com sucesso para o Slack');
       }
     } catch (error) {
-      console.error('❌ Erro ao enviar mensagem para o Slack:', error);
       throw error;
     }
   }
@@ -71,12 +67,13 @@ export class SlackService {
         const codeowners = file.codeowners?.length
           ? ` (*Codeowners: ${file.codeowners.join(', ')}*)`
           : '';
-        return ` • ${file.filename}${codeowners}`;
+        return ` • \`${file.filename}\`${codeowners}`;
       })
       .join('\n');
 
     let message = `✅ *PR Mergeado: <${pr.url}|${pr.url.split('/').pop()} - ${pr.title}>*\n`;
     message += `👤 *Autor:* <@${pr.author}>\n`;
+    message += `🗂️ *Repositório:* <${pr.repoUrl}|${pr.repoName}>\n`;
 
     if (approvedReviewers) {
       message += `👥 *Aprovado por:* ${approvedReviewers}\n`;
@@ -93,10 +90,10 @@ export class SlackService {
     }
 
     message += `📊 *Estatísticas:*\n`;
-    message += ` • *Commits:* ${pr.commits}\n`;
-    message += ` • *Adições:* +${pr.additions}\n`;
-    message += ` • *Remoções:* -${pr.deletions}\n`;
-    message += ` • *Arquivos alterados:* ${pr.changedFiles}\n`;
+    message += ` • *Commits:* _${pr.commits}_\n`;
+    message += ` • *Adições:* _+${pr.additions}_\n`;
+    message += ` • *Remoções:* _-${pr.deletions}_\n`;
+    message += ` • *Arquivos alterados:* _${pr.changedFiles}_\n`;
 
     if (pr.mergedAt) {
       message += `\n🕐 *Mergeado em:* _${new Date(pr.mergedAt).toLocaleString('pt-BR')}_`;

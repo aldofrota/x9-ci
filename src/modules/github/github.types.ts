@@ -29,6 +29,8 @@ export interface PullRequest {
   additions: number;
   deletions: number;
   changedFiles: number;
+  repoName: string;
+  repoUrl: string;
 }
 
 export interface PullRequestFile {
