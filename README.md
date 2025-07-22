@@ -1,4 +1,4 @@
-# X9-CI - Sistema de Notificações de Pull Requests no slack
+# X9-CI - Sistema de Notificações de Pull Requests
 
 Sistema automatizado para processar webhooks do GitHub e enviar notificações detalhadas para o Slack quando PRs são mergeados na main.
 
