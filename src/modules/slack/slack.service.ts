@@ -57,7 +57,6 @@ export class SlackService {
     summary: SummaryResponse,
   ): string {
     const pr = input.pullRequest;
-    console.log(input.reviews);
     const approvedReviewers = input.reviews
       .filter((r) => r.state === 'APPROVED')
       .map((r) => this.getUserProfileLink(r.login))
