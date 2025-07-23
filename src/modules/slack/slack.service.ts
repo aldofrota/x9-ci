@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import { PullRequestSummary } from '@/modules/github/github.types';
+import { PullRequest, PullRequestSummary } from '@/modules/github/github.types';
 import { SummaryResponse } from '@/modules/ai/ai.types';
 
 @Injectable()
@@ -57,9 +57,10 @@ export class SlackService {
     summary: SummaryResponse,
   ): string {
     const pr = input.pullRequest;
+    console.log(input.reviews);
     const approvedReviewers = input.reviews
-      .filter((r) => r.state === 'approved')
-      .map((r) => `@${r.login}`)
+      .filter((r) => r.state === 'APPROVED')
+      .map((r) => this.getUserProfileLink(r.login))
       .join(', ');
 
     const changedFilesList = input.files
@@ -71,8 +72,9 @@ export class SlackService {
       })
       .join('\n');
 
-    let message = `✅ *PR Mergeado: <${pr.url}|${pr.url.split('/').pop()} - ${pr.title}>*\n`;
-    message += `👤 *Autor:* <@${pr.author}>\n`;
+    let message = `📋 *PR: <${pr.url}|${pr.url.split('/').pop()} - ${pr.title}>*\n`;
+    message += `👀 *Status:* ${this.getStatus(pr)}\n`;
+    message += `👤 *Autor:* ${this.getUserProfileLink(pr.author)}\n`;
     message += `🗂️ *Repositório:* <${pr.repoUrl}|${pr.repoName}>\n`;
 
     if (approvedReviewers) {
@@ -100,5 +102,23 @@ export class SlackService {
     }
 
     return message;
+  }
+
+  private getUserProfileLink(username: string): string {
+    return `<https://github.com/${username}|${username}>`;
+  }
+
+  private getStatus(pr: PullRequest): string {
+    if (pr.mergedAt) {
+      return 'Mergeado 🫦';
+    }
+
+    if (pr.state === 'open') {
+      return 'Aberto 🫰';
+    } else if (pr.state === 'closed') {
+      return 'Fechado 😶‍🌫️';
+    }
+
+    return 'Em revisão 🫀';
   }
 }

@@ -14,6 +14,7 @@ export interface PullRequestInfoInput {
   prNumber: number;
   owner: string;
   repo: string;
+  summary: boolean;
 }
 
 export interface PullRequest {

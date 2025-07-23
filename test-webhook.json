@@ -1,8 +1,8 @@
 {
   "action": "closed",
-  "number": 1,
+  "number": 990,
   "pull_request": {
-    "url": "https://api.github.com/repos/aldofrota/x9-ci/pulls/1",
+    "url": "https://api.github.com/repos/ResultadosDigitais/rdsc-megasac-api/pulls/990",
     "id": 2685877388,
     "node_id": "PR_kwDOPQ4dSs6gFzyM",
     "html_url": "https://github.com/aldofrota/x9-ci/pull/1",

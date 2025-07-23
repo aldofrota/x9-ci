@@ -19,7 +19,7 @@ export class PullRequestInfoUseCase {
   private async handlePullRequestInfo(
     payload: PullRequestInfoInput,
   ): Promise<void> {
-    const { prNumber, owner, repo } = payload;
+    const { prNumber, owner, repo, summary } = payload;
 
     const prInfos = await this.githubApiService.getPullRequestSummary(
       owner,
@@ -27,8 +27,11 @@ export class PullRequestInfoUseCase {
       prNumber,
     );
 
-    const summary = await this.geminiService.generateSummary(prInfos);
-
-    await this.slackService.sendPrMergedNotification(prInfos, summary);
+    if (summary) {
+      const summary = await this.geminiService.generateSummary(prInfos);
+      await this.slackService.sendPrMergedNotification(prInfos, summary);
+    } else {
+      await this.slackService.sendPrMergedNotification(prInfos, null);
+    }
   }
 }

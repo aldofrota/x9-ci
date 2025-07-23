@@ -24,6 +24,7 @@ export class GithubController {
       prNumber,
       owner,
       repo,
+      summary: false,
     });
   }
 
