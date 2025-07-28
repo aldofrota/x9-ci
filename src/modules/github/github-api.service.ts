@@ -30,18 +30,17 @@ export class GithubApiService {
   }
 
   async getPullRequestFiles(
-    owner: string,
     repo: string,
     prNumber: number,
   ): Promise<PullRequestFile[]> {
     try {
       const { data: files } = await this.octokit.pulls.listFiles({
-        owner,
+        owner: 'ResultadosDigitais',
         repo,
         pull_number: prNumber,
       });
 
-      const codeownersRules = await this.getCodeownersRules(owner, repo);
+      const codeownersRules = await this.getCodeownersRules(repo);
 
       return files.map((file) => ({
         filename: file.filename,
@@ -57,13 +56,12 @@ export class GithubApiService {
   }
 
   async getPullRequestReviews(
-    owner: string,
     repo: string,
     prNumber: number,
   ): Promise<PullRequestReview[]> {
     try {
       const { data: reviews } = await this.octokit.pulls.listReviews({
-        owner,
+        owner: 'ResultadosDigitais',
         repo,
         pull_number: prNumber,
       });
@@ -98,7 +96,7 @@ export class GithubApiService {
     }
   }
 
-  async getCodeownersFile(owner: string, repo: string): Promise<string> {
+  async getCodeownersFile(repo: string): Promise<string> {
     const possiblePaths = [
       'CODEOWNERS',
       '.github/CODEOWNERS',
@@ -108,7 +106,7 @@ export class GithubApiService {
     for (const path of possiblePaths) {
       try {
         const { data } = await this.octokit.repos.getContent({
-          owner,
+          owner: 'ResultadosDigitais',
           repo,
           path,
         });
@@ -124,14 +122,10 @@ export class GithubApiService {
     return '';
   }
 
-  async getPullRequest(
-    owner: string,
-    repo: string,
-    prNumber: number,
-  ): Promise<PullRequest> {
+  async getPullRequest(repo: string, prNumber: number): Promise<PullRequest> {
     try {
       const { data } = await this.octokit.pulls.get({
-        owner,
+        owner: 'ResultadosDigitais',
         repo,
         pull_number: prNumber,
       });
@@ -150,7 +144,7 @@ export class GithubApiService {
         deletions: data.deletions,
         changedFiles: data.changed_files,
         repoName: repo,
-        repoUrl: `https://github.com/${owner}/${repo}`,
+        repoUrl: `https://github.com/ResultadosDigitais/${repo}`,
       };
     } catch (error) {
       this.logger.error('Erro ao buscar PR: ' + error.message);
@@ -158,14 +152,10 @@ export class GithubApiService {
     }
   }
 
-  async getPullRequestDiff(
-    owner: string,
-    repo: string,
-    prNumber: number,
-  ): Promise<string> {
+  async getPullRequestDiff(repo: string, prNumber: number): Promise<string> {
     try {
       const { data } = await this.octokit.pulls.get({
-        owner,
+        owner: 'ResultadosDigitais',
         repo,
         pull_number: prNumber,
         mediaType: {
@@ -181,16 +171,15 @@ export class GithubApiService {
   }
 
   async getPullRequestSummary(
-    owner: string,
     repo: string,
     prNumber: number,
   ): Promise<PullRequestSummary> {
     try {
       const [pullRequest, files, diff, reviews] = await Promise.all([
-        this.getPullRequest(owner, repo, prNumber),
-        this.getPullRequestFiles(owner, repo, prNumber),
-        this.getPullRequestDiff(owner, repo, prNumber),
-        this.getPullRequestReviews(owner, repo, prNumber),
+        this.getPullRequest(repo, prNumber),
+        this.getPullRequestFiles(repo, prNumber),
+        this.getPullRequestDiff(repo, prNumber),
+        this.getPullRequestReviews(repo, prNumber),
       ]);
 
       return {
@@ -225,17 +214,14 @@ export class GithubApiService {
     }
   }
 
-  private async getCodeownersRules(
-    owner: string,
-    repo: string,
-  ): Promise<CodeownerRule[]> {
-    const cacheKey = `${owner}/${repo}`;
+  private async getCodeownersRules(repo: string): Promise<CodeownerRule[]> {
+    const cacheKey = `ResultadosDigitais/${repo}`;
 
     if (this.codeownersCache.has(cacheKey)) {
       return this.codeownersCache.get(cacheKey)!;
     }
 
-    const codeownersContent = await this.getCodeownersFile(owner, repo);
+    const codeownersContent = await this.getCodeownersFile(repo);
     const rules = this.parseCodeownersFile(codeownersContent);
 
     this.codeownersCache.set(cacheKey, rules);

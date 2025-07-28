@@ -3,6 +3,7 @@ import { PullRequestInfoInput } from './github.types';
 import { GithubApiService } from './github-api.service';
 import { GeminiService } from '@/modules/ai/gemini.service';
 import { SlackService } from '@/modules/slack/slack.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class PullRequestInfoUseCase {
@@ -10,6 +11,7 @@ export class PullRequestInfoUseCase {
     private readonly githubApiService: GithubApiService,
     private readonly geminiService: GeminiService,
     private readonly slackService: SlackService,
+    private readonly configService: ConfigService,
   ) {}
 
   async execute(payload: PullRequestInfoInput): Promise<void> {
@@ -19,10 +21,11 @@ export class PullRequestInfoUseCase {
   private async handlePullRequestInfo(
     payload: PullRequestInfoInput,
   ): Promise<void> {
-    const { prNumber, owner, repo, summary } = payload;
+    const { prNumber, repo } = payload;
+
+    const summary = this.configService.get<boolean>('webhook.summary');
 
     const prInfos = await this.githubApiService.getPullRequestSummary(
-      owner,
       repo,
       prNumber,
     );

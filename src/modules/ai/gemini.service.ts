@@ -17,10 +17,6 @@ export class GeminiService {
   }
 
   async generateSummary(input: PullRequestSummary): Promise<SummaryResponse> {
-    if (!this.configService.get<boolean>('gemini.enabled')) {
-      return null;
-    }
-
     const prompt = this.buildPrompt(input);
 
     const response = await this.genAI.models.generateContent({

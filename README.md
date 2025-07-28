@@ -87,7 +87,7 @@ src/
 
 ```env
 # GitHub
-GITHUB_WEBHOOK_SECRET=your_webhook_secret
+WEBHOOK_SECRET=your_webhook_secret
 GITHUB_TOKEN=your_github_token
 
 # Slack
@@ -106,7 +106,7 @@ Configure o webhook no seu repositório:
 - **URL**: `https://seu-dominio.com/github/webhook`
 - **Content Type**: `application/json`
 - **Events**: `Pull requests`
-- **Secret**: Configure o mesmo valor de `GITHUB_WEBHOOK_SECRET`
+- **Secret**: Configure o mesmo valor de `WEBHOOK_SECRET`
 
 ## 🧪 Testando
 

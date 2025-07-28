@@ -1,7 +1,11 @@
 import { registerAs } from '@nestjs/config';
 
+export const webhook = registerAs('webhook', () => ({
+  secret: process.env.WEBHOOK_SECRET,
+  summary: process.env.GEMINI_ENABLED || true,
+}));
+
 export const githubConfig = registerAs('github', () => ({
-  webhookSecret: process.env.GITHUB_WEBHOOK_SECRET,
   token: process.env.GITHUB_TOKEN,
 }));
 
